@@ -419,7 +419,18 @@ impl SlotHandle {
         match cfg.listen_scheme {
             Scheme::Socks5 => {
                 let target = socks5::accept(&mut stream, &cfg.listen_auth).await?;
-                let up = self.require_upstream().await?;
+
+                // Cổng đã mở nhưng chưa gán proxy: phải TRẢ LỜI đàng hoàng (mã 0x02 —
+                // "không được phép"), đừng đóng im. Client nhận được mã lỗi thì báo ra
+                // câu dễ hiểu; bị cắt ngang thì nó tưởng mạng hỏng và cứ thế thử lại.
+                // Bắt tay đã xong rồi nên trả lời thêm một gói 10 byte là xong.
+                let up = match self.require_upstream().await {
+                    Ok(u) => u,
+                    Err(e) => {
+                        let _ = write_socks_reply(&mut stream, socks5::reply_code_for(&e)).await;
+                        return Err(e);
+                    }
+                };
 
                 match upstream::connect(&up, &target, cfg.dial_timeout).await {
                     Ok(server) => {
