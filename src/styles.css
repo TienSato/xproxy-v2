@@ -1,0 +1,361 @@
+/* ── Bảng màu ─────────────────────────────────────────────────────────────────
+   Định nghĩa đầy đủ ở :root (sáng). Chế độ tối chỉ ghi đè lại đúng các token,
+   không định nghĩa màu mới ở đâu khác — nhờ vậy thêm một màu là chắc chắn có mặt
+   ở cả hai chế độ.
+   --accent do người dùng chọn, App.tsx ghi thẳng vào :root lúc chạy.            */
+
+:root {
+  --bg: #ffffff;
+  --bg-soft: #f6f7f9;
+  --bg-sink: #eef0f4;
+  --border: #e2e5ea;
+  --border-strong: #cdd2da;
+  --text: #16181d;
+  --muted: #6b7280;
+  --faint: #9aa1ab;
+
+  --accent: #2563eb;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-text: #ffffff;
+
+  --green: #15a34a;
+  --red: #dc2626;
+  --orange: #d97706;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .06);
+
+  --label-w: 168px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171c;
+    --bg-soft: #1b1e24;
+    --bg-sink: #22262e;
+    --border: #2b2f38;
+    --border-strong: #3a404b;
+    --text: #e9ebef;
+    --muted: #9aa1ab;
+    --faint: #6c7480;
+    --green: #35c46b;
+    --red: #f26666;
+    --orange: #eda13b;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #15171c;
+  --bg-soft: #1b1e24;
+  --bg-sink: #22262e;
+  --border: #2b2f38;
+  --border-strong: #3a404b;
+  --text: #e9ebef;
+  --muted: #9aa1ab;
+  --faint: #6c7480;
+  --green: #35c46b;
+  --red: #f26666;
+  --orange: #eda13b;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* ── Điều khiển ───────────────────────────────────────────────────────────── */
+
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  padding: 5px 11px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+button:hover:not(:disabled) { background: var(--bg-sink); }
+button:active:not(:disabled) { transform: translateY(.5px); }
+button:disabled { opacity: .4; cursor: default; }
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+button.primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--accent); }
+button.danger { color: var(--red); border-color: color-mix(in srgb, var(--red) 40%, var(--border-strong)); }
+button.ghost { border-color: transparent; background: transparent; }
+button.ghost:hover:not(:disabled) { background: var(--bg-sink); }
+
+input, select {
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  padding: 5px 8px;
+  user-select: text;
+  min-width: 0;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+input::placeholder { color: var(--faint); }
+input:disabled { background: var(--bg-sink); color: var(--muted); }
+
+/* ── Khung ────────────────────────────────────────────────────────────────── */
+
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+.sidebar {
+  width: 216px;
+  flex: 0 0 216px;
+  background: var(--bg-soft);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px 12px;
+  gap: 3px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 2px 8px 18px;
+  font-size: 15px;
+  font-weight: 640;
+  letter-spacing: -.01em;
+}
+.brand svg { flex: 0 0 auto; display: block; }
+
+.navitem {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: var(--r-sm); cursor: pointer;
+  border: 1px solid transparent; background: none; width: 100%; text-align: left;
+  color: var(--muted);
+}
+.navitem:hover { background: var(--bg-sink); color: var(--text); }
+.navitem.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.navitem svg { flex: 0 0 auto; opacity: .85; }
+
+.spacer { flex: 1; }
+
+.statcard {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 11px 12px;
+}
+.statcard .big {
+  font-size: 19px; font-weight: 680; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+.statcard .sub { font-size: 11px; color: var(--muted); }
+.statcard .sub + .big { margin-top: 1px; }
+.statcard .rule { height: 1px; background: var(--border); margin: 9px 0; }
+
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+/* ── Thanh công cụ ────────────────────────────────────────────────────────── */
+
+.bar {
+  display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field > label { font-size: 11px; color: var(--muted); }
+.grow { flex: 1; min-width: 0; }
+.hint { font-size: 11px; color: var(--muted); }
+.hint.warn { color: var(--orange); }
+
+.banner {
+  padding: 9px 16px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--orange) 10%, var(--bg));
+  color: var(--orange);
+}
+
+/* ── Bảng ─────────────────────────────────────────────────────────────────── */
+
+.tablewrap { flex: 1; overflow: auto; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; }
+thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--bg-soft); text-align: left;
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 0 12px;
+  height: 38px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+tbody tr:hover td { background: var(--bg-soft); }
+
+.mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.sel { user-select: text; }
+
+/* Ô ghi chú phải gọn trong MỘT dòng. Không có chỗ này thì một thông điệp lỗi dài
+   kéo giãn cả cột, đẩy bảng rộng ra và làm cả trang phải cuộn ngang. */
+td .note {
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; }
+.dot.green  { background: var(--green); }
+.dot.red    { background: var(--red); }
+.dot.orange { background: var(--orange); }
+.dot.gray   { background: var(--faint); opacity: .5; }
+
+.state { display: inline-flex; align-items: center; gap: 7px; }
+.state .label { font-size: 12px; }
+.state.on    .label { color: var(--green); font-weight: 560; }
+.state.wait  .label { color: var(--orange); }
+.state.err   .label { color: var(--red); }
+.state.off   .label { color: var(--muted); }
+
+.rowbtns { display: flex; gap: 5px; }
+
+/* ── Cài đặt ──────────────────────────────────────────────────────────────── */
+
+.settings {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+}
+.settings-inner { max-width: 780px; margin: 0 auto; }
+
+.section {
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  margin-bottom: 18px;
+}
+.section > h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 640;
+  letter-spacing: -.01em;
+}
+.section > .lede {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 62ch;
+}
+.section > h3:last-child { margin-bottom: 0; }
+
+/* Hàng nhãn — điều khiển, nhãn luôn cùng một chiều rộng nên mọi thứ thẳng cột. */
+.row {
+  display: grid;
+  grid-template-columns: var(--label-w) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+}
+.row > .k { color: var(--muted); font-size: 12px; }
+.row > .v { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; min-width: 0; }
+.row > .v > input[type="number"] { width: 110px; }
+.row.stack { grid-template-columns: 1fr; gap: 6px; }
+.note-under {
+  grid-column: 2;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: -4px;
+  padding-bottom: 6px;
+  max-width: 58ch;
+}
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+label.inline { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+
+pre {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 9px 10px;
+  font-size: 11px;
+  max-height: 190px;
+  overflow: auto;
+  user-select: text;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 8px 0 0;
+}
+
+/* ── Thẻ nhà cung cấp ─────────────────────────────────────────────────────── */
+
+.provider {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.provider.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.provider-head {
+  display: flex; align-items: center; gap: 10px;
+  padding-bottom: 12px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.provider-head input { flex: 1; font-weight: 560; }
+.provider .row { padding: 6px 0; }
+.provider { --label-w: 116px; }
+
+/* ── Chọn màu nhấn ────────────────────────────────────────────────────────── */
+
+.swatches { display: flex; gap: 7px; }
+.swatch {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid transparent; padding: 0; cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12);
+}
+.swatch:hover { background: inherit; }
+.swatch[aria-pressed="true"] { border-color: var(--text); }
+
+/* ── Hộp thoại ────────────────────────────────────────────────────────────── */
+
+.backdrop {
+  position: fixed; inset: 0; background: rgba(8, 10, 14, .38);
+  display: flex; align-items: center; justify-content: center; z-index: 10;
+}
+.modal {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 20px; width: 470px; max-width: 90vw;
+  display: flex; flex-direction: column; gap: 11px;
+  box-shadow: 0 12px 40px rgba(8, 10, 14, .22);
+}
+.modal h3 { margin: 0; font-size: 14px; }
+.modal p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.55; }
+.modal .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+
+.empty { padding: 48px; text-align: center; color: var(--muted); }

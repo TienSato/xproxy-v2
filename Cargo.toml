@@ -1,0 +1,28 @@
+[workspace]
+members = ["crates/xproxy-core", "src-tauri"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.77"
+license = "MIT"
+
+[workspace.dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time", "sync", "macros"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "socks"] }
+anyhow = "1"
+
+[profile.release]
+opt-level = 3
+# lto "thin" + nhiều codegen-unit: build nhanh hơn hẳn "fat" LTO mà tốc độ chạy gần như
+# không khác với loại việc này (chủ yếu là chờ I/O mạng, không phải tính toán).
+lto = "thin"
+codegen-units = 16
+strip = true
+# KHÔNG đặt panic = "abort": vài thư viện trong cây Tauri cần unwind được.
