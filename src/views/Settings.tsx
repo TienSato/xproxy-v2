@@ -130,6 +130,7 @@ export default function SettingsView({ settings, onSave }: {
                     >
                       <option value="host_first">host:port:user:pass</option>
                       <option value="cred_at_host">user:pass@host:port</option>
+                      <option value="host_port">host:port</option>
                     </select>
                     <select
                       value={p.upstream_scheme}

@@ -5197,7 +5197,7 @@ dependencies = [
 
 [[package]]
 name = "xproxy"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -5212,7 +5212,7 @@ dependencies = [
 
 [[package]]
 name = "xproxy-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "libc",
  "reqwest 0.12.28",

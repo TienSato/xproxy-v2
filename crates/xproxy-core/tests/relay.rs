@@ -9,6 +9,7 @@ mod common;
 use std::time::Duration;
 
 use common::{round_trip, socks_connect_domain, FakeUpstream, Origin};
+use xproxy_core::provider::{parse_line, LineFormat};
 use xproxy_core::relay::{GlobalLimit, Scheme, SlotConfig, SlotHandle, Upstream};
 
 
@@ -59,6 +60,26 @@ async fn di_qua_relay_toi_dich() {
     let got = round_trip(s, b"xin chao").await;
 
     assert_eq!(got, "[A]xin chao");
+    assert_eq!(up.hits.load(std::sync::atomic::Ordering::Relaxed), 1);
+}
+
+/// Dòng `host:port` từ nhà cung cấp phải đi qua relay mà không cần user/pass.
+#[tokio::test]
+async fn dong_host_port_di_qua_relay_khong_xac_thuc() {
+    let origin = Origin::start("[A]").await;
+    let up = FakeUpstream::start(None).await;
+    let parsed = parse_line(&up.addr.to_string(), LineFormat::HostPort)
+        .expect("phải đọc được dòng host:port");
+    assert!(parsed.user.is_empty());
+    assert!(parsed.pass.is_empty());
+
+    let slot = bind(cfg()).await;
+    slot.set_upstream(parsed).await;
+
+    let s = socks_connect_domain(slot.port(), "127.0.0.1", origin.addr.port())
+        .await
+        .expect("upstream không xác thực phải nối được qua relay");
+    assert_eq!(round_trip(s, b"khong can mat khau").await, "[A]khong can mat khau");
     assert_eq!(up.hits.load(std::sync::atomic::Ordering::Relaxed), 1);
 }
 
@@ -181,8 +202,9 @@ async fn go_cong_nha_socket_ngay() {
     let slot = bind(cfg()).await;
     let port = slot.port();
 
-    // Đang giữ thì không bind lại được.
-    assert!(tokio::net::TcpListener::bind(("127.0.0.1", port)).await.is_err());
+    // Thử cùng địa chỉ với listener: macOS cho SO_REUSEADDR chồng địa chỉ cụ thể
+    // lên wildcard, nên thử 127.0.0.1 không chứng minh được cổng đã nhả hay chưa.
+    assert!(tokio::net::TcpListener::bind(("0.0.0.0", port)).await.is_err());
 
     slot.shutdown();
 

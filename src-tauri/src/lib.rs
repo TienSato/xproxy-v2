@@ -5,7 +5,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::time::Duration;
 
-use tauri::{Emitter, Manager as _};
+use tauri::Emitter;
 use tokio::sync::RwLock;
 use xproxy_core::{Manager, SlotStatus};
 

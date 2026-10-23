@@ -86,7 +86,13 @@ pub async fn test_provider(state: State<'_, AppState>, provider_id: String) -> R
         body,
         parsed: parsed
             .iter()
-            .map(|u| format!("{}:{}  (user: {})", u.host, u.port, u.user))
+            .map(|u| {
+                if u.user.is_empty() && u.pass.is_empty() {
+                    u.endpoint()
+                } else {
+                    format!("{}  (user: {})", u.endpoint(), u.user)
+                }
+            })
             .collect(),
     })
 }
@@ -229,8 +235,9 @@ pub async fn assign_manual(
     } else {
         LineFormat::HostFirst
     };
-    let mut up = provider::parse_line(&line, fmt)
-        .ok_or_else(|| "sai định dạng — cần host:port:user:pass".to_string())?;
+    let mut up = provider::parse_line(&line, fmt).ok_or_else(|| {
+        "sai định dạng — cần host:port, host:port:user:pass hoặc user:pass@host:port".to_string()
+    })?;
     up.scheme = s.active().upstream_scheme;
 
     if let Err(e) = state.manager.assign(port, up).await {

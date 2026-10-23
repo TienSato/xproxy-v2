@@ -21,7 +21,7 @@ thẳng trong app (`crates/xproxy-core/src/relay/`), nên:
 ## Chạy thử
 
 ```bash
-cd /Users/sato/Documents/xproxy-2
+cd <thư mục dự án>
 cargo test -p xproxy-core
 ```
 
@@ -69,7 +69,7 @@ https://webipapi.cliproxy.com/api/getIpInfo?key=...&port=443&num=1&country=US&st
 ```
 
 Mỗi lần bấm **Gán** / **Đổi**, app gọi URL đó một lần, đọc dòng trả về
-(`64.205.177.44:443:6ab9171c2721211f:kd7c2apyfaxslfb61syy`) và cắm vào đúng cổng vừa bấm.
+(`203.0.113.7:443:user0123abcd:KEY_CUA_BAN_O_DAY`) và cắm vào đúng cổng vừa bấm.
 Thêm hãng mới = dán thêm một URL, không phải khai báo tên tham số như bản Swift.
 
 App chỉ động vào URL ở ba chỗ, còn lại giữ nguyên:

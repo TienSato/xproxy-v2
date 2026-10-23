@@ -318,7 +318,7 @@ function PasteDialog({ port, onClose }: { port: number; onClose: () => void }) {
         </select>
         <input
           autoFocus className="sel"
-          placeholder="64.205.177.44:443:6ab9171c2721211f:kd7c2apyfaxslfb61syy"
+          placeholder="203.0.113.7:443:user0123abcd:KEY_CUA_BAN_O_DAY"
           value={line}
           onChange={(e) => { setLine(e.target.value); setErr(""); }}
           onKeyDown={(e) => { if (e.key === "Enter" && line.trim()) go(); }}

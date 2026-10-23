@@ -4,7 +4,7 @@ import { listen } from "@tauri-apps/api/event";
 // ── Kiểu dữ liệu, khớp với struct bên Rust ──────────────────────────────────
 
 export type Scheme = "socks5" | "http";
-export type LineFormat = "host_first" | "cred_at_host";
+export type LineFormat = "host_first" | "cred_at_host" | "host_port";
 export type SlotStatus = "idle" | "listening" | "starting" | "running" | "error";
 
 export interface Stats {

@@ -11,7 +11,7 @@
 //! ```
 //! và trả về mỗi dòng một proxy:
 //! ```text
-//! 64.205.177.44:443:6ab9171c2721211f:kd7c2apyfaxslfb61syy
+//! 203.0.113.7:443:user0123abcd:KEY_CUA_BAN_O_DAY
 //! ```
 
 mod api;
@@ -32,6 +32,8 @@ pub enum LineFormat {
     HostFirst,
     /// `user:pass@host:port`
     CredAtHost,
+    /// `host:port` — proxy không cần tài khoản/mật khẩu.
+    HostPort,
 }
 
 /// Một nhà cung cấp = một cái tên + một URL. Hết.

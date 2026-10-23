@@ -92,7 +92,7 @@ pub fn build_url(template: &str, o: &UrlOverrides, vary_port: bool) -> Result<Ur
     Ok(out)
 }
 
-/// Parse một dòng proxy. Không khớp dạng ưu tiên thì tự thử dạng còn lại.
+/// Parse một dòng proxy. Không khớp dạng ưu tiên thì tự thử các dạng còn lại.
 pub fn parse_line(line: &str, prefer: LineFormat) -> Option<Upstream> {
     let t = line.trim();
     if t.is_empty() {
@@ -118,9 +118,25 @@ pub fn parse_line(line: &str, prefer: LineFormat) -> Option<Upstream> {
         Some(Upstream::new(parts[0], parts[1].trim().parse().ok()?).with_auth(parts[2], parts[3]))
     };
 
+    let host_port = || -> Option<Upstream> {
+        let (host, port) = t.split_once(':')?;
+        // Chỉ nhận IP/tên máy, không nhận URL, thông báo lỗi hay thông tin đăng nhập.
+        if host.is_empty()
+            || !host.bytes().all(|c| c.is_ascii_alphanumeric() || matches!(c, b'.' | b'-' | b'_'))
+        {
+            return None;
+        }
+        let port: u16 = port.trim().parse().ok()?;
+        if port == 0 {
+            return None;
+        }
+        Some(Upstream::new(host, port))
+    };
+
     match prefer {
-        LineFormat::CredAtHost => cred_at_host().or_else(host_first),
-        LineFormat::HostFirst => host_first().or_else(cred_at_host),
+        LineFormat::CredAtHost => cred_at_host().or_else(host_first).or_else(host_port),
+        LineFormat::HostFirst => host_first().or_else(cred_at_host).or_else(host_port),
+        LineFormat::HostPort => host_port().or_else(host_first).or_else(cred_at_host),
     }
 }
 
@@ -195,19 +211,19 @@ pub async fn raw_get(url: &str) -> (String, String) {
 mod tests {
     use super::*;
 
-    const CLI: &str = "https://webipapi.cliproxy.com/api/getIpInfo?key=kd7c2apyfaxslfb61syy&port=443&num=1&country=US&state=&type=2";
+    const CLI: &str = "https://webipapi.cliproxy.com/api/getIpInfo?key=KEY_CUA_BAN_O_DAY&port=443&num=1&country=US&state=&type=2";
 
     #[test]
     fn parse_dung_dong_that_cua_cliproxy() {
         let u = parse_line(
-            "64.205.177.44:443:6ab9171c2721211f:kd7c2apyfaxslfb61syy",
+            "203.0.113.7:443:user0123abcd:KEY_CUA_BAN_O_DAY",
             LineFormat::HostFirst,
         )
         .unwrap();
-        assert_eq!(u.host, "64.205.177.44");
+        assert_eq!(u.host, "203.0.113.7");
         assert_eq!(u.port, 443);
-        assert_eq!(u.user, "6ab9171c2721211f");
-        assert_eq!(u.pass, "kd7c2apyfaxslfb61syy");
+        assert_eq!(u.user, "user0123abcd");
+        assert_eq!(u.pass, "KEY_CUA_BAN_O_DAY");
     }
 
     #[test]
@@ -215,6 +231,66 @@ mod tests {
         let u = parse_line("user:pass@gate.example.com:7000", LineFormat::CredAtHost).unwrap();
         assert_eq!(u.host, "gate.example.com");
         assert_eq!(u.port, 7000);
+    }
+
+    #[test]
+    fn parse_host_port_khong_can_xac_thuc() {
+        for host in ["203.0.113.7", "gate.example.com", "localhost"] {
+            let u = parse_line(&format!("  {host}:1080\r\n"), LineFormat::HostPort).unwrap();
+            assert_eq!(u.host, host);
+            assert_eq!(u.port, 1080);
+            assert!(u.user.is_empty());
+            assert!(u.pass.is_empty());
+        }
+    }
+
+    #[test]
+    fn host_port_tu_nhan_khi_chon_dinh_dang_khac() {
+        for fmt in [LineFormat::HostFirst, LineFormat::CredAtHost] {
+            let u = parse_line("203.0.113.7:1080", fmt).unwrap();
+            assert_eq!(u, Upstream::new("203.0.113.7", 1080));
+        }
+    }
+
+    #[test]
+    fn chon_host_port_van_giu_thong_tin_xac_thuc() {
+        for line in ["203.0.113.7:1080:bob:a:b:c", "bob:a:b:c@203.0.113.7:1080"] {
+            let u = parse_line(line, LineFormat::HostPort).unwrap();
+            assert_eq!(u, Upstream::new("203.0.113.7", 1080).with_auth("bob", "a:b:c"));
+        }
+    }
+
+    #[test]
+    fn host_port_bo_qua_dong_khong_hop_le() {
+        for line in [
+            "", ":1080", "203.0.113.7", "203.0.113.7:", "203.0.113.7:abc",
+            "203.0.113.7:0", "203.0.113.7:65536", "203.0.113.7:-1",
+            "203.0.113.7:1080:user", "http://203.0.113.7:1080", "203.0.113.7/path:1080",
+            "not a proxy:1080", "user@gate.example.com:1080",
+        ] {
+            assert!(parse_line(line, LineFormat::HostPort).is_none(), "{line}");
+        }
+    }
+
+    #[test]
+    fn parse_nhieu_host_port_trong_phan_hoi() {
+        let text = "\r\n203.0.113.7:1080\r\nSorry, no proxy available\r\ngate.example.com:8080\r\n";
+        assert_eq!(
+            parse_upstreams(text, LineFormat::HostPort),
+            vec![Upstream::new("203.0.113.7", 1080), Upstream::new("gate.example.com", 8080)],
+        );
+    }
+
+    #[test]
+    fn luu_va_doc_lai_dinh_dang_host_port() {
+        let p = Provider { line_format: LineFormat::HostPort, ..Default::default() };
+        let json = serde_json::to_value(&p).unwrap();
+        assert_eq!(json["line_format"], "host_port");
+        let restored: Provider = serde_json::from_value(json).unwrap();
+        assert_eq!(restored.line_format, LineFormat::HostPort);
+
+        let old: Provider = serde_json::from_str("{}").unwrap();
+        assert_eq!(old.line_format, LineFormat::HostFirst);
     }
 
     #[test]
@@ -232,7 +308,7 @@ mod tests {
 
     #[test]
     fn bo_qua_dong_rac_trong_phan_hoi() {
-        let text = "\n64.205.177.44:443:u:p\nSorry, no proxy available\n1.1.1.1:80:a:b\n";
+        let text = "\n203.0.113.7:443:u:p\nSorry, no proxy available\n1.1.1.1:80:a:b\n";
         assert_eq!(parse_upstreams(text, LineFormat::HostFirst).len(), 2);
     }
 
@@ -241,7 +317,7 @@ mod tests {
     fn giu_nguyen_url_goc() {
         let u = build_url(CLI, &UrlOverrides::default(), true).unwrap();
         let s = u.as_str();
-        assert!(s.contains("key=kd7c2apyfaxslfb61syy"));
+        assert!(s.contains("key=KEY_CUA_BAN_O_DAY"));
         assert!(s.contains("type=2"));
         assert!(s.starts_with("https://webipapi.cliproxy.com/api/getIpInfo?"));
     }

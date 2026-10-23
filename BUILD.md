@@ -13,7 +13,7 @@ Hai bản: macOS Apple Silicon (`.dmg`) và Windows x64 (`.exe` / `.msi`).
 ### Chuẩn bị (chỉ làm một lần)
 
 ```bash
-cd /Users/sato/Documents/xproxy-2
+cd <thư mục dự án>
 npm install
 ```
 
@@ -36,22 +36,48 @@ Bản này chạy trên máy **Apple Silicon** (M1/M2/M3/M4). Máy Mac chip Inte
 
 ### Máy nhận phải làm gì
 
-App chưa ký bằng tài khoản Apple Developer, nên macOS sẽ chặn ở lần mở đầu tiên với
-thông báo kiểu *"không mở được vì không xác minh được nhà phát triển"*. Bảo người nhận:
+App ký ad-hoc chứ không ký bằng tài khoản Apple Developer. File `.dmg` tải từ Internet
+về (gửi qua Telegram, Drive, email, AirDrop từ máy lạ…) bị macOS gắn **cờ cách ly**
+`com.apple.quarantine`. Gặp cờ đó, Gatekeeper kiểm chữ ký, thấy không phải Developer ID
+thì **từ chối thẳng** — hộp thoại chỉ ghi cụt lủn *"Không thể mở ứng dụng"*, không có
+nút "Open Anyway" nào cả.
 
-1. Mở `.dmg`, kéo **xproxy** vào Applications.
-2. Vào Applications, **chuột phải** lên xproxy → **Open** → bấm **Open** lần nữa.
+Đó là lý do cùng một file `.dmg`: mở ở máy vừa build thì chạy (file tạo tại chỗ, không
+có cờ cách ly), gửi đi chỗ khác rồi tải về thì không mở được.
 
-Chỉ cần làm một lần. Từ lần sau mở bình thường.
-
-Nếu vẫn bị chặn, chạy lệnh này trên máy đó rồi mở lại:
+Cách xử lý trên máy nhận — mở Terminal, chạy **một lệnh**:
 
 ```bash
 xattr -cr /Applications/xproxy.app
 ```
 
-Lần chạy đầu macOS cũng sẽ hỏi cho phép nhận kết nối mạng đến — phải bấm **Allow**,
-không thì thiết bị khác trong LAN không cắm vào được.
+Sau đó mở app bình thường. Chỉ cần làm một lần cho mỗi lần cài.
+
+Muốn gỡ cờ trước cả khi mở `.dmg` thì gỡ trên chính file dmg:
+
+```bash
+xattr -cr ~/Downloads/xproxy_0.1.0_aarch64.dmg
+```
+
+Trình tự đầy đủ gửi cho người nhận:
+
+1. Tải `.dmg` về.
+2. Mở Terminal, gõ `xattr -cr ` (có dấu cách ở cuối) rồi **kéo file .dmg vào cửa sổ
+   Terminal** — đường dẫn tự điền — bấm Enter.
+3. Mở `.dmg`, kéo **xproxy** vào Applications.
+4. Mở app.
+
+Lần chạy đầu macOS sẽ hỏi cho phép nhận kết nối mạng đến — phải bấm **Allow**, không thì
+thiết bị khác trong LAN không cắm vào được.
+
+### Muốn người nhận không phải làm gì cả
+
+Phải ký bằng **Apple Developer ID** rồi **notarize** (gửi app cho Apple quét, Apple đóng
+dấu xác nhận). Cần tài khoản Apple Developer, 99 USD/năm. Khi đó `.dmg` tải về mở thẳng,
+không cảnh báo, không cần Terminal.
+
+Đáng làm nếu bạn gửi cho nhiều người hoặc người không rành máy. Gửi cho vài người quen
+thì một lệnh `xattr -cr` là xong.
 
 ---
 
@@ -103,7 +129,7 @@ Cách này ra **cả hai** bản cùng lúc, miễn phí, không cần sở hữ
 ### Lần đầu
 
 ```bash
-cd /Users/sato/Documents/xproxy-2
+cd <thư mục dự án>
 git init
 git add .
 git commit -m "xproxy v2"
@@ -154,9 +180,13 @@ Cả hai đều đã nằm trong `.gitignore`, không bị đẩy lên GitHub.
 
 ## 5. Đổi số phiên bản
 
-Sửa ở **hai** chỗ cho khớp nhau:
+Sửa ở **ba** chỗ cho khớp nhau, rồi cập nhật hai file lock tương ứng:
 
 - `package.json` → `"version"`
+- `Cargo.toml` → `[workspace.package].version`
 - `src-tauri/tauri.conf.json` → `"version"`
+
+`package-lock.json` và hai package `xproxy`, `xproxy-core` trong `Cargo.lock` cũng
+phải mang cùng phiên bản.
 
 Số này đi vào tên file cài, nên đổi trước khi build bản gửi đi.
